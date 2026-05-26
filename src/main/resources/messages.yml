@@ -2,7 +2,7 @@ messages:
 
   chat:
     enabled: true
-    message: "&aSold &f%items% &aitems for &a%amounts%"
+    message: "<green>Sold </green><white>%items% </white><green>items for </green><green>%amounts%</green>"
 
   actionbar:
     enabled: true
