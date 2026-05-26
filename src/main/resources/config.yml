@@ -1,20 +1,54 @@
-cooldown-ms: 150
+#
+# LoyalAutoSell Configuration
+#
 
-enabled-worlds:
-  - mine_world
+sellables:
 
-economy:
-  default: excellent
-
-items:
   DIAMOND:
-    price: 100.0
+    price: 125
     economy: money
 
-  IRON_INGOT:
-    price: 10.0
-    economy: money
+  EMERALD:
+    price: 250
+    economy: tokens
 
   GOLD_INGOT:
-    price: 25.0
+    price: 50
     economy: money
+
+
+#
+# Worlds where AutoSell will work.
+#
+enabled-worlds:
+  - mine
+  - exampleworld
+
+
+#
+# PlaceholderAPI Placeholders
+#
+# %autosell_items%
+#   -> Pending sold items amount.
+#
+# %autosell_pending_<economy>%
+#   -> Pending amount for a currency.
+#
+# Examples:
+#   %autosell_pending_money%
+#   %autosell_pending_tokens%
+#
+# %autosell_price_<material>%
+#   -> Configured sell price of a material.
+#
+# Examples:
+#   %autosell_price_diamond%
+#   %autosell_price_gold_ingot%
+#
+# %autosell_currency_<material>%
+#   -> Currency received for selling the material.
+#
+# Examples:
+#   %autosell_currency_diamond%
+#   %autosell_currency_emerald%
+#
