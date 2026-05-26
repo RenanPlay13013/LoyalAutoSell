@@ -114,7 +114,7 @@ public final class LoyalAutoSell extends JavaPlugin {
                 new BlockBreakListener(autoSellService), this
         );
 
-        Bukkit.getPluginManager().registerEvents(new AutoSellNotificationListener(sellResultFormatter), this);
+        Bukkit.getPluginManager().registerEvents(new AutoSellNotificationListener(sellResultFormatter, uiConfigLoader), this);
     }
 
     private void scheduleTasks() {
