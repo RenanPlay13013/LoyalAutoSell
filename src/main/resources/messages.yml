@@ -2,8 +2,8 @@ messages:
 
   chat:
     enabled: true
-    message: "<green>Sold <white>%items% items for <green>%amounts%"
+    message: "&aSold &f%items% &aitems for &a%amounts%"
 
   actionbar:
     enabled: true
-    message: "<green>+$%amounts%"
+    message: "&a+$%amounts%"
