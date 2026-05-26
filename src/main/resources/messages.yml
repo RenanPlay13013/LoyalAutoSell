@@ -1,0 +1,9 @@
+messages:
+
+  chat:
+    enabled: true
+    message: "<green>Sold <white>%items% items for <green>%amounts%"
+
+  actionbar:
+    enabled: true
+    message: "<green>+$%amounts%"
