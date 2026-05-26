@@ -1,70 +1,136 @@
 package net.loyalnetwork.loyalAutoSell;
 
-import net.loyalnetwork.loyalAutoSell.cache.ItemCache;
-import net.loyalnetwork.loyalAutoSell.command.AutoSellCommand;
-import net.loyalnetwork.loyalAutoSell.command.AutoSellTabCompleter;
-import net.loyalnetwork.loyalAutoSell.listener.AutoSellListener;
-import net.loyalnetwork.loyalAutoSell.processor.SellProcessor;
-import net.loyalnetwork.loyalAutoSell.scheduler.SellScheduler;
-import net.loyalnetwork.loyalAutoSell.tracker.DirtyTracker;
+import lombok.Getter;
+import net.loyalnetwork.loyalAutoSell.core.api.AutoSellAPI;
+import net.loyalnetwork.loyalAutoSell.core.command.AutoSellCommand;
+import net.loyalnetwork.loyalAutoSell.core.command.AutoSellTabCompleter;
+import net.loyalnetwork.loyalAutoSell.core.config.SellConfigLoader;
+import net.loyalnetwork.loyalAutoSell.core.listener.BlockBreakListener;
+import net.loyalnetwork.loyalAutoSell.core.manager.EconomyManager;
+import net.loyalnetwork.loyalAutoSell.core.manager.SellManager;
+import net.loyalnetwork.loyalAutoSell.core.manager.WorldManager;
+import net.loyalnetwork.loyalAutoSell.core.placeholder.AutoSellExpansion;
+import net.loyalnetwork.loyalAutoSell.core.service.AutoSellService;
+import net.loyalnetwork.loyalAutoSell.core.task.AutoSellFlushTask;
+import net.loyalnetwork.loyalAutoSell.ui.config.MessagesConfig;
+import net.loyalnetwork.loyalAutoSell.ui.config.UIConfigLoader;
+import net.loyalnetwork.loyalAutoSell.ui.formatter.SellResultFormatter;
+import net.loyalnetwork.loyalAutoSell.ui.listener.AutoSellNotificationListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import su.nightexpress.excellenteconomy.api.ExcellentEconomyAPI;
 
 public final class LoyalAutoSell extends JavaPlugin {
 
-    private ItemCache itemCache;
-    private DirtyTracker dirtyTracker;
-    private SellProcessor processor;
-    private SellScheduler scheduler;
-    private ExcellentEconomyAPI economyApi;
+    @Getter private SellManager sellManager;
+    @Getter private AutoSellService autoSellService;
+    @Getter private EconomyManager economyManager;
+    @Getter private WorldManager worldManager;
+    @Getter private SellResultFormatter sellResultFormatter;
+
+    private ExcellentEconomyAPI api;
+    private SellConfigLoader configLoader;
+    private MessagesConfig messagesConfig;
+    private AutoSellExpansion expansion;
+    private UIConfigLoader uiConfigLoader;
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        if (!setupEconomy()) return;
 
-        if (getServer().getPluginManager().getPlugin("ExcellentEconomy") == null) {
-            getServer().getLogger().severe("ExcellentEconomy não encontrado!");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
+        initManagers();
+        loadConfig();
+        setupPlaceholderAPI();
+        registerListeners();
+        scheduleTasks();
+        registerAPI();
+        registerCommands();
 
-        RegisteredServiceProvider<ExcellentEconomyAPI> provider =
-                Bukkit.getServer().getServicesManager().getRegistration(ExcellentEconomyAPI.class);
-        if (provider != null) {
-            economyApi = provider.getProvider();
-        }
-
-        itemCache = new ItemCache();
-        itemCache.load(getConfig());
-
-        dirtyTracker = new DirtyTracker();
-        processor = new SellProcessor(this, itemCache, economyApi);
-        scheduler = new SellScheduler(this, dirtyTracker, processor, itemCache);
-
-        getServer().getPluginManager().registerEvents(new AutoSellListener(itemCache, dirtyTracker), this);
-        getCommand("autosell").setExecutor(new AutoSellCommand(this));
-        getCommand("autosell").setTabCompleter(new AutoSellTabCompleter());
-
-        scheduler.start();
-
-        getLogger().info("LoyalAutoSell ativado com " + itemCache.size() + " itens configurados.");
+        getLogger().info("Enabled.");
     }
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTasks(this);
-        if (itemCache != null) itemCache.clear();
-        if (dirtyTracker != null) dirtyTracker.clear();
+        if (autoSellService != null) {
+            autoSellService.flushAll();
+        }
     }
 
-    public void reload() {
-        reloadConfig();
-        itemCache.load(getConfig());
+    public ExcellentEconomyAPI getEconomyApi() {
+        return api;
     }
 
-    public ItemCache getItemCache() {
-        return itemCache;
+    // -------------------------------------------------------------------------
+    // Private setup methods
+    // -------------------------------------------------------------------------
+
+    private boolean setupEconomy() {
+        RegisteredServiceProvider<ExcellentEconomyAPI> provider =
+                Bukkit.getServer().getServicesManager().getRegistration(ExcellentEconomyAPI.class);
+
+        if (provider == null) {
+            getLogger().severe("ExcellentEconomy provider not found. Disabling!");
+            getServer().getPluginManager().disablePlugin(this);
+            return false;
+        }
+
+        api = provider.getProvider();
+        return true;
+    }
+
+    private void initManagers() {
+        saveDefaultConfig();
+        this.sellManager = new SellManager();
+        this.economyManager = new EconomyManager(this);
+        this.worldManager = new WorldManager();
+        this.autoSellService = new AutoSellService(sellManager, economyManager, worldManager);
+        this.sellResultFormatter = new SellResultFormatter();
+
+        worldManager.load(getConfig().getStringList("enabled-worlds"));
+    }
+
+    private void loadConfig() {
+        this.configLoader = new SellConfigLoader(sellManager);
+        configLoader.load(getConfig());
+
+        messagesConfig = new MessagesConfig(this);
+        messagesConfig.load();
+
+        uiConfigLoader = new UIConfigLoader();
+
+    }
+
+    private void setupPlaceholderAPI() {
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            this.expansion = new AutoSellExpansion(autoSellService, sellManager);
+            expansion.register();
+        }
+    }
+
+    private void registerListeners() {
+        Bukkit.getPluginManager().registerEvents(
+                new BlockBreakListener(autoSellService), this
+        );
+
+        Bukkit.getPluginManager().registerEvents(new AutoSellNotificationListener(sellResultFormatter), this);
+    }
+
+    private void scheduleTasks() {
+        new AutoSellFlushTask(autoSellService).runTaskTimer(this, 20L, 20L);
+    }
+
+    private void registerAPI() {
+        Bukkit.getServicesManager().register(
+                AutoSellAPI.class, autoSellService, this, ServicePriority.Normal
+        );
+    }
+
+    private void registerCommands() {
+        getCommand("autosell").setExecutor(
+                new AutoSellCommand(this, configLoader, worldManager, messagesConfig, uiConfigLoader, expansion)
+        );
+        getCommand("autosell").setTabCompleter(new AutoSellTabCompleter());
     }
 }

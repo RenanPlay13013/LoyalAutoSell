@@ -7,14 +7,27 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://jitpack.io" )
+
+    //EXcellentEconomy Repo
     maven("https://repo.nightexpressdev.com/releases")
+
+    //PAPI REPO
+    maven("https://repo.extendedclip.com/releases/")
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+
+    //ExcellentEconomy
     compileOnly("su.nightexpress.excellenteconomy:ExcellentEconomy:2.8.0")
+    compileOnly("su.nightexpress.nightcore:main:2.15.2")
+
+    //Lombok
     compileOnly("org.projectlombok:lombok:1.18.46")
     annotationProcessor("org.projectlombok:lombok:1.18.46")
+
+    //PAPI
+    compileOnly("me.clip:placeholderapi:2.11.6")
 }
 
 java {

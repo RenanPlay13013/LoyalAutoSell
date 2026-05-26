@@ -7,6 +7,8 @@ api-version: '1.21.11'
 load: POSTWORLD
 depend:
   - ExcellentEconomy
+softdepend:
+  - PlaceholderAPI
 
 authors: [ Café ]
 
