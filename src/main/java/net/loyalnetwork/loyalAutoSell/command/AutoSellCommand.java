@@ -4,7 +4,6 @@ import net.loyalnetwork.loyalAutoSell.LoyalAutoSell;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 public class AutoSellCommand implements CommandExecutor {
 
@@ -16,22 +15,19 @@ public class AutoSellCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         if (args.length == 0) {
             sender.sendMessage("§cUse: /autosell reload");
             return true;
         }
 
         if (args[0].equalsIgnoreCase("reload")) {
-
             if (!sender.hasPermission("loyautosell.reload")) {
                 sender.sendMessage("§cSem permissão.");
                 return true;
             }
 
             try {
-                plugin.reloadConfig();
-
+                plugin.reload();
                 sender.sendMessage("§aConfig recarregada com sucesso!");
             } catch (Exception e) {
                 sender.sendMessage("§cErro ao recarregar config. Verifique o console.");
