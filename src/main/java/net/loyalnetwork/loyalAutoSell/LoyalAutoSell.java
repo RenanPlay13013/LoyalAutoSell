@@ -99,6 +99,7 @@ public final class LoyalAutoSell extends JavaPlugin {
         messagesConfig.load();
 
         uiConfigLoader = new UIConfigLoader();
+        uiConfigLoader.load(messagesConfig);
 
     }
 
