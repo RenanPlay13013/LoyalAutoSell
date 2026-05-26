@@ -1,0 +1,18 @@
+enabled-worlds:
+  - mine_world
+
+economy:
+  default: excellent
+
+items:
+  DIAMOND:
+    price: 100.0
+    economy: money
+
+  IRON_INGOT:
+    price: 10.0
+    economy: money
+
+  GOLD_INGOT:
+    price: 25.0
+    economy: money

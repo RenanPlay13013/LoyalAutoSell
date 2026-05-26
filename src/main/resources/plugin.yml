@@ -1,0 +1,17 @@
+name: LoyalAutoSell
+prefix: LoyalAutoSell
+version: '${version}'
+
+main: net.loyalnetwork.loyalAutoSell.LoyalAutoSell
+api-version: '1.21.11'
+load: POSTWORLD
+depend:
+  - ExcellentEconomy
+
+authors: [ Café ]
+
+commands:
+  autosell:
+    description: "AutoSell command"
+    usage: "/autosell reload"
+    permission: "loyalautosell.reload"
